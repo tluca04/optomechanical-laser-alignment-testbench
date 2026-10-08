@@ -1,0 +1,4 @@
+# Local IDE and container caches
+.vscode/
+.devcontainer/
+.cache/

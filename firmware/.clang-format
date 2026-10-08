@@ -1,0 +1,13 @@
+BasedOnStyle: Google
+IndentWidth: 4
+TabWidth: 4
+ContinuationIndentWidth: 4
+ColumnLimit: 120
+MaxEmptyLinesToKeep: 2               
+KeepEmptyLinesAtTheStartOfBlocks: true 
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortFunctionsOnASingleLine: None
+AllowShortBlocksOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+SortIncludes: Never
+IncludeBlocks: Preserve
