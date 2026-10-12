@@ -10,7 +10,7 @@ The setup steers a 650 nm laser diode (KY-008) using two SG90 micro-servos. The 
 - **Power Delivery:** An LM2596 DC-DC step-down buck converter provides a separate 5V rail for the servos and laser, keeping motor current spikes away from the ESP32 supply rail.
 - **Angle & Vibration Feedback:**
   - **2x AS5600 (12-bit magnetic encoders):** Mounted on each servo axis with diametric magnets to measure the actual axis position and quantify gear backlash.
-  - **MPU-6050 (GY-521):** Mounted directly on the laser bracket to detect vibration frequencies and mechanical disturbances.
+  - **MPU-6050 / IMU (GY-521):** Mounted directly on the laser bracket to detect vibration frequencies and mechanical disturbances.
 - **Environmental & Electrical Monitoring:**
   - **BMP280 + AHT20:** Temperature, pressure, and humidity sensing to check whether environmental changes correlate with beam drift.
   - **INA219:** Current and voltage monitor on the laser supply to track electrical changes during operation.
@@ -21,10 +21,12 @@ The setup steers a 650 nm laser diode (KY-008) using two SG90 micro-servos. The 
 
 ## Current status
 
-- [x] ESP-IDF I2C driver running (`i2c_master`)
-- [x] MPU-6050 responds to `WHO_AM_I`
+- [x] ESP-IDF I2C driver running (`i2c_master`, GPIO 21/22)
+- [x] IMU responds to `WHO_AM_I` (returns `0x72`; confirmed functional on GY-521 clone)
 - [x] Basic Python serial listener working (`host/reader.py`)
-- [x] Read continuous accelerometer and gyroscope registers
+- [x] Continuous 14-byte burst read (accel, temp, gyro @ 2 Hz polling for comms check)
+- [ ] Configure higher sampling rate / FIFO for actual vibration analysis
+- [ ] Add host-side CSV logging with timestamps
 - [ ] Integrate BMP280 / AHT20 environmental readout
 - [ ] Read dual AS5600 magnetic encoders (primary I2C bus + secondary bus)
 - [ ] Configure LEDC PWM for servo angle control & add transistor gate for KY-008
@@ -35,11 +37,11 @@ The setup steers a 650 nm laser diode (KY-008) using two SG90 micro-servos. The 
 
 ## I2C Bus Allocation
 
-All sensors operate on 3.3V logic. The ESP32 utilizes two hardware I2C controllers to accommodate the duplicate fixed address of the two AS5600 encoders (`0x36`):
+All sensors interface using 3.3V logic levels. The ESP32 utilizes two hardware I2C controllers to accommodate the duplicate fixed address of the two AS5600 encoders (`0x36`):
 
 | Device | Bus / Interface | Default Address | Function |
 | :--- | :--- | :--- | :--- |
-| **MPU-6050** | I2C0 (GPIO 21 / 22) | `0x68` | Mount vibration |
+| **MPU-6050 / IMU** | I2C0 (GPIO 21 / 22) | `0x68` | Mount vibration |
 | **SSD1306** | I2C0 (GPIO 21 / 22) | `0x3C` | Local display |
 | **BMP280** | I2C0 (GPIO 21 / 22) | `0x76` | Ambient temperature / pressure |
 | **AHT20** | I2C0 (GPIO 21 / 22) | `0x38` | Ambient humidity |
@@ -60,21 +62,9 @@ idf.py build
 idf.py -p COM3 flash monitor
 ```
 
-### Run PC serial reader
-
-```bash
-cd host
-pip install -r requirements.txt
-python reader.py
-```
-
 ## Repository Structure
 
 - `firmware/` – ESP-IDF source code, peripheral drivers, and FreeRTOS tasks
 - `host/` – Python serial logging and OpenCV tracking scripts
 - `cad/` – 3D printed brackets, sensor fixtures, and mount linkages
 - `docs/` – Wiring diagrams, bus maps, and bench test notes
-
-## License
-
-MIT
