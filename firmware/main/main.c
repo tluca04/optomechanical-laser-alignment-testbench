@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "driver/i2c_master.h"
+#include "esp_err.h"
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -38,4 +39,19 @@ void app_main(void) {
     }
 
     mpu6050_test_connection(mpu_device);
+    mpu6050_configure(mpu_device);
+
+    mpu6050_raw_data_t sensor_data;
+
+    while (1) {
+        esp_err_t status = mpu6050_read_raw(mpu_device, &sensor_data);
+
+        if (status == ESP_OK) {
+            ESP_LOGI(TAG, "MPU6050 ACC -> X: %6d | Y: %6d | Z: %6d", sensor_data.accel_x, sensor_data.accel_y, sensor_data.accel_z);
+            ESP_LOGI(TAG, "MPU6050 GYRO -> X: %6d | Y: %6d | Z: %6d", sensor_data.gyro_x, sensor_data.gyro_y, sensor_data.gyro_z);
+        } else {
+            ESP_LOGE(TAG, "Failed MPU6050 read");
+        }
+        vTaskDelay(pdMS_TO_TICKS(500));
+    }
 }

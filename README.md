@@ -24,7 +24,7 @@ The setup steers a 650 nm laser diode (KY-008) using two SG90 micro-servos. The 
 - [x] ESP-IDF I2C driver running (`i2c_master`)
 - [x] MPU-6050 responds to `WHO_AM_I`
 - [x] Basic Python serial listener working (`host/reader.py`)
-- [ ] Read continuous accelerometer and gyroscope registers
+- [x] Read continuous accelerometer and gyroscope registers
 - [ ] Integrate BMP280 / AHT20 environmental readout
 - [ ] Read dual AS5600 magnetic encoders (primary I2C bus + secondary bus)
 - [ ] Configure LEDC PWM for servo angle control & add transistor gate for KY-008

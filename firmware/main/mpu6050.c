@@ -1,4 +1,5 @@
 #include "mpu6050.h"
+#include "driver/i2c_master.h"
 #include "esp_log.h"
 
 static const char* TAG = "MPU6050";
@@ -40,5 +41,48 @@ esp_err_t mpu6050_test_connection(i2c_master_dev_handle_t dev_handle) {
     }
 
     ESP_LOGI(TAG, "MPU6050 connection verified");
+    return ESP_OK;
+}
+
+esp_err_t mpu6050_configure(i2c_master_dev_handle_t dev_handle) {
+
+    uint8_t i2cpack[2] = {MPU6050_REG_PWR_MGMT_1, 0x01};
+
+    esp_err_t status = i2c_master_transmit(dev_handle, i2cpack, sizeof(i2cpack), 50);
+
+    if (status != ESP_OK) {
+        ESP_LOGE(TAG, "Failed MPU6050 configuration");
+        return status;
+    }
+    ESP_LOGI(TAG, "Succesful MPU6050 configuration");
+    return status;
+}
+
+esp_err_t mpu6050_read_raw(i2c_master_dev_handle_t dev_handle, mpu6050_raw_data_t* raw_data) {
+
+    if (raw_data == NULL) {
+        ESP_LOGE(TAG, "Invalid pointer argument");
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    uint8_t reg = MPU6050_REG_ACCEL_XOUT_H;
+
+    uint8_t data[14];
+
+    esp_err_t status = i2c_master_transmit_receive(dev_handle, &reg, 1, data, sizeof(data), 50);
+
+    if (status != ESP_OK) {
+        ESP_LOGE(TAG, "Failed I2C read: %s", esp_err_to_name(status));
+        return status;
+    }
+
+    raw_data->accel_x = (int16_t)((data[0] << 8) | data[1]);
+    raw_data->accel_y = (int16_t)((data[2] << 8) | data[3]);
+    raw_data->accel_z = (int16_t)((data[4] << 8) | data[5]);
+    raw_data->temp = (int16_t)((data[6] << 8) | data[7]);
+    raw_data->gyro_x = (int16_t)((data[8] << 8) | data[9]);
+    raw_data->gyro_y = (int16_t)((data[10] << 8) | data[11]);
+    raw_data->gyro_z = (int16_t)((data[12] << 8) | data[13]);
+
     return ESP_OK;
 }
