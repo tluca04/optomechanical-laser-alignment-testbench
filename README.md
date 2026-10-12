@@ -27,11 +27,14 @@ The setup steers a 650 nm laser diode (KY-008) using two SG90 micro-servos. The 
 - [x] Continuous 14-byte burst read (accel, temp, gyro @ 2 Hz polling for comms check)
 - [ ] Configure higher sampling rate / FIFO for actual vibration analysis
 - [ ] Add host-side CSV logging with timestamps
-- [ ] Integrate BMP280 / AHT20 environmental readout
+- [ ] Configure LEDC PWM for SG90 servo angle control
+- [ ] Implement GPIO control for KY-008 laser transistor gating
 - [ ] Read dual AS5600 magnetic encoders (primary I2C bus + secondary bus)
-- [ ] Configure LEDC PWM for servo angle control & add transistor gate for KY-008
+- [ ] Integrate BMP280 / AHT20 environmental readout
+- [ ] Integrate INA219 voltage & current monitoring for the laser rail
 - [ ] Integrate BH1750 aperture sensor reading
-- [ ] Add SSD1306 status display and MicroSD FATFS SPI logging
+- [ ] Add SSD1306 status display (I2C)
+- [ ] Implement MicroSD FATFS logging over SPI
 - [ ] OpenCV script to extract spot coordinates (X, Y)
 - [ ] Closed-loop corrective tracking over serial
 
