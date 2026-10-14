@@ -2,3 +2,4 @@
 .vscode/
 .devcontainer/
 .cache/
+*.csv

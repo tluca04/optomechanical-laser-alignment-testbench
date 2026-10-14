@@ -25,8 +25,8 @@ The setup steers a 650 nm laser diode (KY-008) using two SG90 micro-servos. The 
 - [x] IMU responds to `WHO_AM_I` (returns `0x72`; confirmed functional on GY-521 clone)
 - [x] Basic Python serial listener working (`host/reader.py`)
 - [x] Continuous 14-byte burst read (accel, temp, gyro @ 2 Hz polling for comms check)
-- [ ] Configure higher sampling rate / FIFO for actual vibration analysis
-- [ ] Add host-side CSV logging with timestamps
+- [x] Configure higher sampling rate / FIFO for actual vibration analysis
+- [x] Add host-side CSV logging with timestamps
 - [ ] Configure LEDC PWM for SG90 servo angle control
 - [ ] Implement GPIO control for KY-008 laser transistor gating
 - [ ] Read dual AS5600 magnetic encoders (primary I2C bus + secondary bus)

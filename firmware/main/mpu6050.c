@@ -46,16 +46,19 @@ esp_err_t mpu6050_test_connection(i2c_master_dev_handle_t dev_handle) {
 
 esp_err_t mpu6050_configure(i2c_master_dev_handle_t dev_handle) {
 
-    uint8_t i2cpack[2] = {MPU6050_REG_PWR_MGMT_1, 0x01};
+    uint8_t i2cpack[5][2] = {{MPU6050_REG_PWR_MGMT_1, 0x01}, {MPU6050_CONFIG, 0x03}, {MPU6050_REG_SPEED_DIV, 0x09}, {MPU6050_GYRO_CONFIG, 0x00}, {MPU6050_ACCEL_CONFIG, 0x00}};
 
-    esp_err_t status = i2c_master_transmit(dev_handle, i2cpack, sizeof(i2cpack), 50);
+    for (int i = 0; i < 5; ++i) {
 
-    if (status != ESP_OK) {
-        ESP_LOGE(TAG, "Failed MPU6050 configuration");
-        return status;
+        esp_err_t status = i2c_master_transmit(dev_handle, i2cpack[i], sizeof(i2cpack[i]), 50);
+
+        if (status != ESP_OK) {
+            ESP_LOGE(TAG, "Failed MPU6050 configuration at index %d", i);
+            return status;
+        }
     }
     ESP_LOGI(TAG, "Succesful MPU6050 configuration");
-    return status;
+    return ESP_OK;
 }
 
 esp_err_t mpu6050_read_raw(i2c_master_dev_handle_t dev_handle, mpu6050_raw_data_t* raw_data) {

@@ -8,6 +8,10 @@
 #define MPU6050_CHIP_ID 0x72
 #define MPU6050_REG_PWR_MGMT_1 0x6B
 #define MPU6050_REG_ACCEL_XOUT_H 0x3B
+#define MPU6050_REG_SPEED_DIV 0x19
+#define MPU6050_CONFIG 0x1A
+#define MPU6050_GYRO_CONFIG 0x1B
+#define MPU6050_ACCEL_CONFIG 0x1C
 
 typedef struct {
     int16_t accel_x;
