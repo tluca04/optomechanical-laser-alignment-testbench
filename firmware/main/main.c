@@ -6,6 +6,7 @@
 #include "freertos/task.h"
 #include "mpu6050.h"
 #include "esp_timer.h"
+#include "servo.h"
 
 static const char* TAG = "MAIN";
 
