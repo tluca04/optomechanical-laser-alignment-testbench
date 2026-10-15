@@ -25,8 +25,9 @@ The setup steers a 650 nm laser diode (KY-008) using two SG90 micro-servos. The 
 - [x] IMU responds to `WHO_AM_I` (returns `0x72`; confirmed functional on GY-521 clone)
 - [x] Basic Python serial listener working (`host/reader.py`)
 - [x] Continuous 14-byte burst read (accel, temp, gyro @ 2 Hz polling for comms check)
-- [x] Configure higher sampling rate / FIFO for actual vibration analysis
-- [x] Add host-side CSV logging with timestamps
+- [x] Increase sampling rate to 100 Hz and enable DLPF (44 Hz)
+- [x] Add host-side CSV logging with timestamps (`host/reader.py`)
+- [x] Add Python plotting script for acceleration and gyro data (`host/imuplot.py`)
 - [ ] Configure LEDC PWM for SG90 servo angle control
 - [ ] Implement GPIO control for KY-008 laser transistor gating
 - [ ] Read dual AS5600 magnetic encoders (primary I2C bus + secondary bus)
@@ -54,6 +55,15 @@ All sensors interface using 3.3V logic levels. The ESP32 utilizes two hardware I
 | **AS5600 (Tilt)**| I2C1 (GPIO 18 / 19) | `0x36` | Vertical axis actual angle |
 
 *Remaining pinouts (servo PWM, transistor gate, and SPI lines for SD card) will be documented in `docs/wiring.md`.*
+
+## IMU Data Acquisition Test (100 Hz)
+
+The ESP32 reads the MPU-6050 over I2C at 100 Hz (`10 ms` loop) with the hardware Digital Low-Pass Filter set to `44 Hz` (`0x03`) to reduce high-frequency noise. Raw values are streamed over UART, logged to `data.csv`, and converted to physical units (`±2g` -> `16384 LSB/g`, `±250 deg/s` -> `131.072 LSB/(deg/s)`).
+
+![IMU 100Hz Test](docs/imu_100hz_validation.png)
+
+* **0s – 9.4s (Movement & impacts):** Manual tilting and rotation of the sensor across all axes, plus mechanical taps near `8.5s–9.0s`. Around `t = 6.7s`, `Gy` hits the `+250 deg/s` full-scale limit.
+* **9.5s – 12.5s (Stationary on desk):** Sensor resting flat on the table. The filtered signals stay flat with minimal noise (`Ax ≈ 1.0g`, `Az ≈ 0.23g` due to breadboard tilt, and gyro axes near `0 deg/s`).
 
 ## Quick Start
 
