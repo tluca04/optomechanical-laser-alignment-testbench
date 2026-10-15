@@ -1,83 +1,82 @@
 # Optomechanical Laser Alignment Testbench
 
-A testbench to evaluate how well software feedback and mechanical preloading can stabilize a low-cost laser pan-tilt mechanism against vibration, gear backlash, and thermal drift.
+Testbench built to see how well sensor feedback and mechanical spring preloading can fix the backlash and vibration issues of cheap SG90 micro-servos when steering a laser beam.
 
-The setup steers a 650 nm laser diode (KY-008) using two SG90 micro-servos. The system measures mount position, mechanical vibration, ambient conditions, and beam alignment using several sensors and a host-side webcam.
+An ESP32 controls a 2-axis pan-tilt mount carrying a 650 nm laser diode (KY-008), while reading angle encoders, an IMU, and environmental sensors. A webcam on the PC tracks the laser spot on a target to close the control loop.
 
-## How the setup works
+## Hardware notes
 
-- **Laser & Mount:** A KY-008 5 mW laser diode on a 3D-printed 2-DOF pan-tilt bracket driven by two SG90 servos (with spring preloading to reduce gear backlash). The laser is powered from 5V and gated via an NPN transistor.
-- **Power Delivery:** An LM2596 DC-DC step-down buck converter provides a separate 5V rail for the servos and laser, keeping motor current spikes away from the ESP32 supply rail.
-- **Angle & Vibration Feedback:**
-  - **2x AS5600 (12-bit magnetic encoders):** Mounted on each servo axis with diametric magnets to measure the actual axis position and quantify gear backlash.
-  - **MPU-6050 / IMU (GY-521):** Mounted directly on the laser bracket to detect vibration frequencies and mechanical disturbances.
-- **Environmental & Electrical Monitoring:**
-  - **BMP280 + AHT20:** Temperature, pressure, and humidity sensing to check whether environmental changes correlate with beam drift.
-  - **INA219:** Current and voltage monitor on the laser supply to track electrical changes during operation.
-- **Target & Vision Feedback:**
-  - **BH1750:** Digital light sensor placed behind a pinhole aperture on the target to detect optical alignment peak.
-  - **Webcam + OpenCV:** A host-side camera pointed at the target tracks the laser spot centroid (X, Y) and streams position corrections back to the ESP32 over serial.
-- **Local Telemetry & Storage:** An SSD1306 OLED (I2C) for live stats and a MicroSD card module (SPI) for standalone data logging.
+The pan-tilt bracket is 3D-printed and uses springs to preload the servo gears. Since SG90 servos draw current spikes that can reset or add noise to the ESP32, the servos and laser run on a separate 5V rail from an LM2596 buck converter. The laser is switched through an NPN transistor.
 
-## Current status
+Sensors on the rig:
+- 2x AS5600 magnetic encoders (12-bit) on the pan and tilt shafts to measure the real angle vs. commanded PWM.
+- MPU-6050 IMU on the laser bracket to measure vibrations and impacts.
+- BH1750 light sensor behind a pinhole on the target, plus a USB webcam running OpenCV to track the (X, Y) center of the laser dot.
+- BMP280, AHT20, and INA219 to check if room temperature or laser current drift over time.
+- SSD1306 OLED screen and a MicroSD SPI module for local display and logging.
 
-- [x] ESP-IDF I2C driver running (`i2c_master`, GPIO 21/22)
-- [x] IMU responds to `WHO_AM_I` (returns `0x72`; confirmed functional on GY-521 clone)
-- [x] Basic Python serial listener working (`host/reader.py`)
-- [x] Continuous 14-byte burst read (accel, temp, gyro @ 2 Hz polling for comms check)
-- [x] Increase sampling rate to 100 Hz and enable DLPF (44 Hz)
-- [x] Add host-side CSV logging with timestamps (`host/reader.py`)
-- [x] Add Python plotting script for acceleration and gyro data (`host/imuplot.py`)
-- [ ] Configure LEDC PWM for SG90 servo angle control
-- [ ] Implement GPIO control for KY-008 laser transistor gating
-- [ ] Read dual AS5600 magnetic encoders (primary I2C bus + secondary bus)
-- [ ] Integrate BMP280 / AHT20 environmental readout
-- [ ] Integrate INA219 voltage & current monitoring for the laser rail
-- [ ] Integrate BH1750 aperture sensor reading
-- [ ] Add SSD1306 status display (I2C)
-- [ ] Implement MicroSD FATFS logging over SPI
-- [ ] OpenCV script to extract spot coordinates (X, Y)
-- [ ] Closed-loop corrective tracking over serial
+## Todo / Progress
 
-## I2C Bus Allocation
+- [x] ESP-IDF I2C master driver (GPIO 21/22)
+- [x] MPU-6050 communication check (WHO_AM_I returns 0x72 instead of 0x68 due to the clone chip on the GY-521 board)
+- [x] Python serial reader and CSV logger (host/reader.py)
+- [x] 14-byte burst read for accel, temp, and gyro
+- [x] 100 Hz sampling loop + 44 Hz hardware low-pass filter (DLPF = 0x03)
+- [x] Python script to plot acceleration and gyro data (host/imuplot.py)
+- [ ] PWM control for the SG90 servos (LEDC driver)
+- [ ] GPIO switching for the laser transistor
+- [ ] Read both AS5600 encoders
+- [ ] Add BMP280, AHT20, INA219, and BH1750 drivers
+- [ ] SSD1306 OLED and MicroSD SPI logging
+- [ ] OpenCV script to find laser spot (X, Y) coordinates
+- [ ] Closed-loop serial tracking
 
-All sensors interface using 3.3V logic levels. The ESP32 utilizes two hardware I2C controllers to accommodate the duplicate fixed address of the two AS5600 encoders (`0x36`):
+## I2C Addresses
 
-| Device | Bus / Interface | Default Address | Function |
+All sensors use 3.3V logic. Both AS5600 encoders share the same fixed address (0x36), so they are split across the two hardware I2C buses of the ESP32:
+
+| Component | Bus / Pins | Address | Notes |
 | :--- | :--- | :--- | :--- |
-| **MPU-6050 / IMU** | I2C0 (GPIO 21 / 22) | `0x68` | Mount vibration |
-| **SSD1306** | I2C0 (GPIO 21 / 22) | `0x3C` | Local display |
-| **BMP280** | I2C0 (GPIO 21 / 22) | `0x76` | Ambient temperature / pressure |
-| **AHT20** | I2C0 (GPIO 21 / 22) | `0x38` | Ambient humidity |
-| **BH1750** | I2C0 (GPIO 21 / 22) | `0x23` | Target alignment peak |
-| **INA219** | I2C0 (GPIO 21 / 22) | `0x40` | Laser current / voltage |
-| **AS5600 (Pan)** | I2C0 (GPIO 21 / 22) | `0x36` | Horizontal axis actual angle |
-| **AS5600 (Tilt)**| I2C1 (GPIO 18 / 19) | `0x36` | Vertical axis actual angle |
+| MPU-6050 | I2C0 (GPIO 21 / 22) | 0x68 | IMU on laser bracket (clone chip, WHO_AM_I = 0x72) |
+| SSD1306 | I2C0 (GPIO 21 / 22) | 0x3C | OLED display |
+| BMP280 | I2C0 (GPIO 21 / 22) | 0x76 | Temp / pressure |
+| AHT20 | I2C0 (GPIO 21 / 22) | 0x38 | Humidity |
+| BH1750 | I2C0 (GPIO 21 / 22) | 0x23 | Target light sensor |
+| INA219 | I2C0 (GPIO 21 / 22) | 0x40 | Laser current / voltage |
+| AS5600 (Pan) | I2C0 (GPIO 21 / 22) | 0x36 | Pan angle |
+| AS5600 (Tilt)| I2C1 (GPIO 18 / 19) | 0x36 | Tilt angle |
 
-*Remaining pinouts (servo PWM, transistor gate, and SPI lines for SD card) will be documented in `docs/wiring.md`.*
+Other pins (servo PWM, laser transistor, SPI) are listed in docs/wiring.md.
 
-## IMU Data Acquisition Test (100 Hz)
+## 100 Hz IMU Test
 
-The ESP32 reads the MPU-6050 over I2C at 100 Hz (`10 ms` loop) with the hardware Digital Low-Pass Filter set to `44 Hz` (`0x03`) to reduce high-frequency noise. Raw values are streamed over UART, logged to `data.csv`, and converted to physical units (`±2g` -> `16384 LSB/g`, `±250 deg/s` -> `131.072 LSB/(deg/s)`).
+The ESP32 reads the MPU-6050 at 100 Hz (10 ms loop) over I2C at 400 kHz. Because the raw readings were noisy without filtering, the internal 44 Hz low-pass filter is enabled (register 0x1A set to 0x03). Raw values are sent over serial, saved to data.csv, and converted to g (±2g scale -> 16384 LSB/g) and deg/s (±250 deg/s scale -> 131.072 LSB/(deg/s)).
 
 ![IMU 100Hz Test](docs/imu_100hz_validation.png)
 
-* **0s – 9.4s (Movement & impacts):** Manual tilting and rotation of the sensor across all axes, plus mechanical taps near `8.5s–9.0s`. Around `t = 6.7s`, `Gy` hits the `+250 deg/s` full-scale limit.
-* **9.5s – 12.5s (Stationary on desk):** Sensor resting flat on the table. The filtered signals stay flat with minimal noise (`Ax ≈ 1.0g`, `Az ≈ 0.23g` due to breadboard tilt, and gyro axes near `0 deg/s`).
+During the first ~9 seconds of this test, the breadboard was tilted and rotated by hand with a few taps on the desk around t = 8.5s. Near t = 6.7s, Gy hits the +250 deg/s sensor limit and clips. After 9.5s, the board was left flat on the desk. Signal noise remains very low, and Az stays around 0.23g because the module sits slightly tilted on the breadboard.
 
-## Quick Start
+## How to run
 
-### Build and flash ESP32
-
+Flash the ESP32 (ESP-IDF):
 ```bash
 cd firmware
 idf.py build
 idf.py -p COM3 flash monitor
 ```
 
+```bash
+cd host
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+python reader.py      # logs to data.csv (edit COM port inside)
+python imuplot.py     # plots data.csv
+```
+
 ## Repository Structure
 
-- `firmware/` – ESP-IDF source code, peripheral drivers, and FreeRTOS tasks
-- `host/` – Python serial logging and OpenCV tracking scripts
-- `cad/` – 3D printed brackets, sensor fixtures, and mount linkages
-- `docs/` – Wiring diagrams, bus maps, and bench test notes
+- `firmware/` – ESP-IDF C code and drivers
+- `host/` – Python scripts for serial logging, plotting, and OpenCV
+- `cad/` – 3D-printed mount parts and STEP files
+- `docs/` – Pinouts and test plots
