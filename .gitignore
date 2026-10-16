@@ -2,4 +2,5 @@
 .vscode/
 .devcontainer/
 .cache/
+.venv/
 *.csv

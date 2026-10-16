@@ -1,3 +1,4 @@
 pyserial
 matplotlib
 pandas
+opencv-python

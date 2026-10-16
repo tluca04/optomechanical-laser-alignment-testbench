@@ -74,6 +74,10 @@ python reader.py      # logs to data.csv (edit COM port inside)
 python imuplot.py     # plots data.csv
 ```
 
+## Prerequisites
+Firmware Toolchain: ESP-IDF v5.x (installed via VS Code ESP-IDF Extension)
+Host Environment: Python 3.10+ (pip install -r host/requirements.txt)
+
 ## Repository Structure
 
 - `firmware/` – ESP-IDF C code and drivers

@@ -16,7 +16,9 @@ gx_gps = df["gx"]/131.072
 gy_gps = df["gy"]/131.072
 gz_gps = df["gz"]/131.072
 
-plt.subplot(2, 1, 1)
+servo_deg = df["servo_deg"]
+
+plt.subplot(3, 1, 1)
 plt.plot(time_s, ax_g, label="Ax")
 plt.plot(time_s, ay_g, label="Ay")
 plt.plot(time_s, az_g, label="Az")
@@ -25,11 +27,18 @@ plt.xlabel("Time [s]")
 plt.legend()
 plt.grid(True)
 
-plt.subplot(2, 1, 2)
+plt.subplot(3, 1, 2)
 plt.plot(time_s, gx_gps, label="Gx")
 plt.plot(time_s, gy_gps, label="Gy")
 plt.plot(time_s, gz_gps, label="Gz")
 plt.ylabel("Gyroscope [deg/s]")
+plt.xlabel("Time [s]")
+plt.legend()
+plt.grid(True)
+
+plt.subplot(3, 1, 3)
+plt.step(time_s, servo_deg, where="post", label="Servo angle")
+plt.ylabel("Servo [deg]")
 plt.xlabel("Time [s]")
 plt.legend()
 plt.grid(True)

@@ -23,10 +23,10 @@ void app_main(void) {
 
     i2c_master_bus_handle_t sensor_bus;
 
-    esp_err_t status = i2c_new_master_bus(&bus_config, &sensor_bus);
+    esp_err_t status_mpu650 = i2c_new_master_bus(&bus_config, &sensor_bus);
 
-    if (status != ESP_OK) {
-        ESP_LOGE(TAG, "Failed I2C bus initialization: %s", esp_err_to_name(status));
+    if (status_mpu650 != ESP_OK) {
+        ESP_LOGE(TAG, "Failed I2C bus initialization: %s", esp_err_to_name(status_mpu650));
         return;
     }
 
@@ -34,37 +34,61 @@ void app_main(void) {
 
     i2c_master_dev_handle_t mpu_device;
 
-    status = mpu6050_init(sensor_bus, &mpu_device);
-    if (status != ESP_OK) {
+    status_mpu650 = mpu6050_init(sensor_bus, &mpu_device);
+    if (status_mpu650 != ESP_OK) {
         ESP_LOGE(TAG, "Failed MPU6050 initialization");
         return;
     }
 
-    status = mpu6050_test_connection(mpu_device);
-    if (status != ESP_OK) {
-        ESP_LOGE(TAG, "Failed MPU6050 connection test : %s", esp_err_to_name(status));
+    status_mpu650 = mpu6050_test_connection(mpu_device);
+    if (status_mpu650 != ESP_OK) {
+        ESP_LOGE(TAG, "Failed MPU6050 connection test : %s", esp_err_to_name(status_mpu650));
         return;
     }
 
-    status = mpu6050_configure(mpu_device);
-    if (status != ESP_OK) {
-        ESP_LOGE(TAG, "Failed MPU6050 configuration: %s", esp_err_to_name(status));
+    status_mpu650 = mpu6050_configure(mpu_device);
+    if (status_mpu650 != ESP_OK) {
+        ESP_LOGE(TAG, "Failed MPU6050 configuration: %s", esp_err_to_name(status_mpu650));
         return;
     }
 
     mpu6050_raw_data_t sensor_data;
 
+    esp_err_t status_servo = servo_init();
+    if (status_servo != ESP_OK) {
+        ESP_LOGE(TAG, "Failed servo initialization: %s", esp_err_to_name(status_servo));
+        return;
+    }
+
+    ESP_LOGI(TAG, "Successful servo initialization");
+
+    servo_set_angle(0.0f);
+
+    float test_angles[] = {0.0f, 90.0f, 180.0f, 90.0f};
+    int angle_i = 0;
+    int loop_count = 0;
 
     while (1) {
 
-        status = mpu6050_read_raw(mpu_device, &sensor_data);
+        status_mpu650 = mpu6050_read_raw(mpu_device, &sensor_data);
 
-        if (status == ESP_OK) {
+        if(loop_count >= 200) {
+            loop_count = 0;
+            ++angle_i;
+            if (angle_i >= 4) {
+                angle_i = 0;
+            }
+            servo_set_angle(test_angles[angle_i]);
+        }
+
+        if (status_mpu650 == ESP_OK) {
             uint32_t time_ms = (uint32_t)(esp_timer_get_time() / 1000);
-            printf("DATA,%lu,%d,%d,%d,%d,%d,%d,%d\n", (unsigned long)time_ms, sensor_data.accel_x, sensor_data.accel_y, sensor_data.accel_z, sensor_data.temp, sensor_data.gyro_x, sensor_data.gyro_y, sensor_data.gyro_z);
+            printf("DATA,%lu,%d,%d,%d,%d,%d,%d,%d,%.1f\n", (unsigned long)time_ms, sensor_data.accel_x, sensor_data.accel_y, sensor_data.accel_z, sensor_data.temp, sensor_data.gyro_x, sensor_data.gyro_y, sensor_data.gyro_z, test_angles[angle_i]);
         } else {
             ESP_LOGE(TAG, "Failed MPU6050 read");
         }
+
+        loop_count++;
         vTaskDelay(pdMS_TO_TICKS(10));
     }
 }
