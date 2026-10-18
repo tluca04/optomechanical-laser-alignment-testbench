@@ -54,7 +54,9 @@ The ESP32 reads the MPU-6050 at 100 Hz (10 ms loop) over I2C at 400 kHz. Because
 
 ![IMU 100Hz Test](docs/imu_100hz_validation.png)
 
-During the first ~9 seconds of this test, the breadboard was tilted and rotated by hand with a few taps on the desk around t = 8.5s. Near t = 6.7s, Gy hits the +250 deg/s sensor limit and clips. After 9.5s, the board was left flat on the desk. Signal noise remains very low, and Az stays around 0.23g because the module sits slightly tilted on the breadboard.
+First ~15.5s: tilting and rotating the breadboard by hand (gyro clips at ±250 deg/s around 8.3s and 12.8s). 
+After 15.5s: board left flat on the desk while the servo steps every 2s. 
+The small spikes around 16s–19.5s are from tapping the desk and breadboard. `Az` stays around 0.23g at rest since the sensor module sits slightly crooked on the pins.
 
 ## How to run
 

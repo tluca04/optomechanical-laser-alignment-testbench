@@ -62,33 +62,33 @@ void app_main(void) {
 
     ESP_LOGI(TAG, "Successful servo initialization");
 
-    servo_set_angle(0.0f);
+    servo_angle(0.0f);
 
     float test_angles[] = {0.0f, 90.0f, 180.0f, 90.0f};
     int angle_i = 0;
-    int loop_count = 0;
+    uint32_t last_servo_ms = (uint32_t)(esp_timer_get_time() / 1000);
 
     while (1) {
 
+        uint32_t time_ms = (uint32_t)(esp_timer_get_time() / 1000);
         status_mpu650 = mpu6050_read_raw(mpu_device, &sensor_data);
 
-        if(loop_count >= 200) {
-            loop_count = 0;
+        if ((time_ms - last_servo_ms) >= 2000) {
+            last_servo_ms += 2000;
             ++angle_i;
             if (angle_i >= 4) {
                 angle_i = 0;
             }
-            servo_set_angle(test_angles[angle_i]);
+            servo_angle(test_angles[angle_i]);
         }
 
         if (status_mpu650 == ESP_OK) {
-            uint32_t time_ms = (uint32_t)(esp_timer_get_time() / 1000);
             printf("DATA,%lu,%d,%d,%d,%d,%d,%d,%d,%.1f\n", (unsigned long)time_ms, sensor_data.accel_x, sensor_data.accel_y, sensor_data.accel_z, sensor_data.temp, sensor_data.gyro_x, sensor_data.gyro_y, sensor_data.gyro_z, test_angles[angle_i]);
         } else {
             ESP_LOGE(TAG, "Failed MPU6050 read");
         }
 
-        loop_count++;
+
         vTaskDelay(pdMS_TO_TICKS(10));
     }
 }
