@@ -68,6 +68,9 @@ void app_main(void) {
     int angle_i = 0;
     uint32_t last_servo_ms = (uint32_t)(esp_timer_get_time() / 1000);
 
+    TickType_t last_wake_time = xTaskGetTickCount();
+    const TickType_t period_ticks = pdMS_TO_TICKS(10);
+
     while (1) {
 
         uint32_t time_ms = (uint32_t)(esp_timer_get_time() / 1000);
@@ -89,6 +92,6 @@ void app_main(void) {
         }
 
 
-        vTaskDelay(pdMS_TO_TICKS(10));
+        vTaskDelayUntil(&last_wake_time, period_ticks);
     }
 }

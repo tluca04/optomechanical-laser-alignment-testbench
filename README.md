@@ -23,7 +23,7 @@ Sensors on the rig:
 - [x] 14-byte burst read for accel, temp, and gyro
 - [x] 100 Hz sampling loop + 44 Hz hardware low-pass filter (DLPF = 0x03)
 - [x] Python script to plot acceleration and gyro data (host/imuplot.py)
-- [ ] PWM control for the SG90 servos (LEDC driver)
+- [x] PWM control for the SG90 servos (LEDC driver)
 - [ ] GPIO switching for the laser transistor
 - [ ] Read both AS5600 encoders
 - [ ] Add BMP280, AHT20, INA219, and BH1750 drivers
