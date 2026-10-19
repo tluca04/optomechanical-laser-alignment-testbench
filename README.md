@@ -52,11 +52,16 @@ Other pins (servo PWM, laser transistor, SPI) are listed in docs/wiring.md.
 
 The ESP32 reads the MPU-6050 at 100 Hz (10 ms loop) over I2C at 400 kHz. Because the raw readings were noisy without filtering, the internal 44 Hz low-pass filter is enabled (register 0x1A set to 0x03). Raw values are sent over serial, saved to data.csv, and converted to g (±2g scale -> 16384 LSB/g) and deg/s (±250 deg/s scale -> 131.072 LSB/(deg/s)).
 
-![IMU 100Hz Test](docs/imu_100hz_validation.png)
+Two SG90 servos (pan and tilt) are also driven by the ESP32, moving one at a time: every 1 s one of them steps to the next angle, so each servo changes position every 2 s. The angles plotted are the commanded ones, not measured.
 
-First ~15.5s: tilting and rotating the breadboard by hand (gyro clips at ±250 deg/s around 8.3s and 12.8s). 
-After 15.5s: board left flat on the desk while the servo steps every 2s. 
-The small spikes around 16s–19.5s are from tapping the desk and breadboard. `Az` stays around 0.23g at rest since the sensor module sits slightly crooked on the pins.
+![IMU test](docs/imu_100hz_validation.png)
+
+Measured sampling rate is 100.0 Hz with 2591 samples in about 26 s, so no reads were lost. 
+First ~12.5 s: tilting and rotating the breadboard by hand (the gyro reaches the ±250 deg/s limit around 7.7s and 8.7s). 
+After that the board is left flat on the desk while the servos keep stepping. 
+The spikes between 13s and 19.5s are from tapping the desk and breadboard. 
+The sensor is not attached to the servos, so their movement doesn't show up in the data. 
+Ax stays around 1g and Az around 0.2g at rest since the sensor module sits slightly crooked on the pins.
 
 ## How to run
 

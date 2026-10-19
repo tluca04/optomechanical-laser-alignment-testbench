@@ -62,31 +62,47 @@ void app_main(void) {
 
     ESP_LOGI(TAG, "Successful servo initialization");
 
-    servo_angle(0.0f);
 
-    float test_angles[] = {0.0f, 90.0f, 180.0f, 90.0f};
-    int angle_i = 0;
+    float pan_angles[] = {0.0f, 90.0f, 180.0f, 90.0f};
+    float tilt_angles[] = {0.0f, 90.0f, 180.0f, 90.0f};
+    int pan_i = 0;
+    int tilt_i = 0;
+    bool move_pan = true;
+
+    servo_angle(SERVO_PAN, pan_angles[0]);
+    servo_angle(SERVO_TILT, tilt_angles[0]);
+
     uint32_t last_servo_ms = (uint32_t)(esp_timer_get_time() / 1000);
-
     TickType_t last_wake_time = xTaskGetTickCount();
     const TickType_t period_ticks = pdMS_TO_TICKS(10);
 
     while (1) {
 
-        uint32_t time_ms = (uint32_t)(esp_timer_get_time() / 1000);
         status_mpu650 = mpu6050_read_raw(mpu_device, &sensor_data);
+        uint32_t time_ms = (uint32_t)(esp_timer_get_time() / 1000);
 
-        if ((time_ms - last_servo_ms) >= 2000) {
-            last_servo_ms += 2000;
-            ++angle_i;
-            if (angle_i >= 4) {
-                angle_i = 0;
+        if ((time_ms - last_servo_ms) >= 1000) {
+            last_servo_ms += 1000;
+
+            if (move_pan) {
+                ++pan_i;
+                if (pan_i >= 4) {
+                    pan_i = 0;
+                }
+                servo_angle(SERVO_PAN, pan_angles[pan_i]);
+
+            } else {
+                ++tilt_i;
+                if (tilt_i >= 4) {
+                    tilt_i = 0;
+                }
+                servo_angle(SERVO_TILT, tilt_angles[tilt_i]);
             }
-            servo_angle(test_angles[angle_i]);
+            move_pan = !move_pan;
         }
 
         if (status_mpu650 == ESP_OK) {
-            printf("DATA,%lu,%d,%d,%d,%d,%d,%d,%d,%.1f\n", (unsigned long)time_ms, sensor_data.accel_x, sensor_data.accel_y, sensor_data.accel_z, sensor_data.temp, sensor_data.gyro_x, sensor_data.gyro_y, sensor_data.gyro_z, test_angles[angle_i]);
+            printf("DATA,%lu,%d,%d,%d,%d,%d,%d,%d,%.1f,%.1f\n", (unsigned long)time_ms, sensor_data.accel_x, sensor_data.accel_y, sensor_data.accel_z, sensor_data.temp, sensor_data.gyro_x, sensor_data.gyro_y, sensor_data.gyro_z, pan_angles[pan_i], tilt_angles[tilt_i]);
         } else {
             ESP_LOGE(TAG, "Failed MPU6050 read");
         }

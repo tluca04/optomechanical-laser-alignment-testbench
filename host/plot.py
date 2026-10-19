@@ -16,7 +16,8 @@ gx_gps = df["gx"]/131.072
 gy_gps = df["gy"]/131.072
 gz_gps = df["gz"]/131.072
 
-servo_deg = df["servo_deg"]
+pan_deg = df["pan_deg"]
+tilt_deg = df["tilt_deg"]
 
 plt.subplot(3, 1, 1)
 plt.plot(time_s, ax_g, label="Ax")
@@ -37,7 +38,8 @@ plt.legend()
 plt.grid(True)
 
 plt.subplot(3, 1, 3)
-plt.step(time_s, servo_deg, where="post", label="Servo angle")
+plt.step(time_s, pan_deg, where="post", label="Pan angle")
+plt.step(time_s, tilt_deg, where="post", label="Tilt angle")
 plt.ylabel("Servo [deg]")
 plt.xlabel("Time [s]")
 plt.legend()

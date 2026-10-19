@@ -4,7 +4,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define SERVO_GPIO 25
+#define SERVO_GPIO_PAN 25
+#define SERVO_GPIO_TILT 26
 #define SERVO_FREQ_HZ 50
 #define SERVO_MIN_PULSE_US 500
 #define SERVO_MAX_PULSE_US 2500
@@ -12,6 +13,8 @@
 #define SERVO_MAX_ANGLE_DEG 180.0f
 #define SERVO_MAX_STEPS 16384
 
+typedef enum { SERVO_PAN = 0, SERVO_TILT = 1 } servo_axis_t;
+
 esp_err_t servo_init(void);
 
-esp_err_t servo_angle(float angle_degree);
+esp_err_t servo_angle(servo_axis_t axis, float angle_degree);
