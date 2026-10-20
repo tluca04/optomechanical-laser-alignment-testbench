@@ -18,17 +18,19 @@ Sensors on the rig:
 ## Todo / Progress
 
 - [x] ESP-IDF I2C master driver (GPIO 21/22)
-- [x] MPU-6050 communication check (WHO_AM_I returns 0x72 instead of 0x68 due to the clone chip on the GY-521 board)
+- [x] MPU-6050 communication check (WHO_AM_I returns 0x72 instead of 0x68, since the GY-521 board has a clone chip)
 - [x] Python serial reader and CSV logger (host/reader.py)
-- [x] 14-byte burst read for accel, temp, and gyro
+- [x] 14-byte burst read for accel, temp and gyro
 - [x] 100 Hz sampling loop + 44 Hz hardware low-pass filter (DLPF = 0x03)
-- [x] Python script to plot acceleration and gyro data (host/imuplot.py)
+- [x] Python script to plot accel and gyro data (host/plot.py)
 - [x] PWM control for the SG90 servos (LEDC driver)
+- [x] Staggered servo movement, so the USB port doesn't brown out
+- [x] Two-way UART: the ESP32 reads commands (CMD,pan,tilt) without blocking the main loop
 - [ ] GPIO switching for the laser transistor
 - [ ] Read both AS5600 encoders
-- [ ] Add BMP280, AHT20, INA219, and BH1750 drivers
+- [ ] Add BMP280, AHT20, INA219 and BH1750 drivers
 - [ ] SSD1306 OLED and MicroSD SPI logging
-- [ ] OpenCV script to find laser spot (X, Y) coordinates
+- [ ] OpenCV script to find the laser spot (X, Y) coordinates
 - [ ] Closed-loop serial tracking
 
 ## I2C Addresses
@@ -48,20 +50,23 @@ All sensors use 3.3V logic. Both AS5600 encoders share the same fixed address (0
 
 Other pins (servo PWM, laser transistor, SPI) are listed in docs/wiring.md.
 
-## 100 Hz IMU Test
+## IMU Data & UART Control Test
 
-The ESP32 reads the MPU-6050 at 100 Hz (10 ms loop) over I2C at 400 kHz. Because the raw readings were noisy without filtering, the internal 44 Hz low-pass filter is enabled (register 0x1A set to 0x03). Raw values are sent over serial, saved to data.csv, and converted to g (±2g scale -> 16384 LSB/g) and deg/s (±250 deg/s scale -> 131.072 LSB/(deg/s)).
+MPU-6050 at 100 Hz (sample rate divider 9, DLPF 44 Hz), +-2 g and +-250 deg/s. Servo commands are sent from the PC over UART while the IMU keeps streaming. The IMU board is not mounted on the servos, so its motion is independent of them.
 
-Two SG90 servos (pan and tilt) are also driven by the ESP32, moving one at a time: every 1 s one of them steps to the next angle, so each servo changes position every 2 s. The angles plotted are the commanded ones, not measured.
+![IMU and servo test](docs/imu_100hz_validation.png)
 
-![IMU test](docs/imu_100hz_validation.png)
+- 0 - 1.7 s: board at rest, gravity mostly on X (~1 g)
+- 1.7 - 8.8 s: I moved the breadboard by hand, so accel and gyro vary a lot (gyro up to about 250 deg/s)
+- 1.67 s: pan 90 -> 45
+- 2.67 s: tilt 90 -> 120
+- 3.67 s: pan 45 -> 135
+- 4.67 s: tilt 120 -> 60
+- 8.8 - 11 s: board left still, gyro ~0 and accel flat
+- 11 - 15 s: I tapped the board to generate vibrations (short spikes in accel and gyro) while the servos stayed at their last position
+- 15 - 18 s: still again
 
-Measured sampling rate is 100.0 Hz with 2591 samples in about 26 s, so no reads were lost. 
-First ~12.5 s: tilting and rotating the breadboard by hand (the gyro reaches the ±250 deg/s limit around 7.7s and 8.7s). 
-After that the board is left flat on the desk while the servos keep stepping. 
-The spikes between 13s and 19.5s are from tapping the desk and breadboard. 
-The sensor is not attached to the servos, so their movement doesn't show up in the data. 
-Ax stays around 1g and Az around 0.2g at rest since the sensor module sits slightly crooked on the pins.
+Servos are moved one axis per second to avoid the inrush current (around 1.3 A) that can brown out the ESP32.
 
 ## How to run
 

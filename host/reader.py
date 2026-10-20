@@ -6,8 +6,25 @@ f = open("data.csv", "w")
 f.write("time_ms,ax,ay,az,temp_raw,gx,gy,gz,pan_deg,tilt_deg\n")
 f.flush()
 
+
 try:
+    start_time = time.time()
+    step = 0
     while True:
+        elapsed = time.time() - start_time
+        if elapsed > 2.0 and step == 0:
+            ser.write(b"CMD,45.0,90.0\n")
+            step = 1
+        elif elapsed > 3.0 and step == 1:
+            ser.write(b"CMD,45.0,120.0\n")
+            step = 2
+        elif elapsed > 4.0 and step == 2:   
+            ser.write(b"CMD,135.0,120.0\n")
+            step = 3
+        elif elapsed > 5.0 and step == 3: 
+            ser.write(b"CMD,135.0,60.0\n")
+            step = 4
+
         line = ser.readline()
         if line:
             final_text = line.decode('utf-8', errors='ignore').strip()
