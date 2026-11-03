@@ -13,7 +13,9 @@ Sensors on the rig:
 
 ## Physical Setup
 
-![Testbench physical setup](docs/testbench_setup.jpg)
+<p align="center">
+  <img src="docs/testbench_setup.jpg" alt="Testbench physical setup" width="400">
+</p>
 
 Current bench setup with the 3D-printed pan-tilt mount, SG90 servos, KY-008 laser diode, and the MPU-6050 mounted directly on the top tilt bracket. The ESP32 sits on the breadboard with the 100 nF decoupling capacitor on the 5V rail and the NPN transistor switch (1k base resistor, 10k pull-down) driving the laser on GPIO 27.
 
