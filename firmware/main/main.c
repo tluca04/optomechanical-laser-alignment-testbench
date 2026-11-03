@@ -8,10 +8,15 @@
 #include "esp_timer.h"
 #include "servo.h"
 #include "driver/uart.h"
+#include "driver/gpio.h"
 
 static const char* TAG = "MAIN";
 
 void app_main(void) {
+
+    gpio_reset_pin(GPIO_NUM_27);
+    gpio_set_direction(GPIO_NUM_27, GPIO_MODE_OUTPUT);
+    gpio_set_level(GPIO_NUM_27, 1);
 
     i2c_master_bus_config_t bus_config = {
         .i2c_port = I2C_NUM_0,
