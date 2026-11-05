@@ -57,15 +57,14 @@ The servo angle plots show commanded positions rather than measured shaft angles
 
 The centering test was repeated 5 times for slack 0° and slack 3°, and the error curves were averaged.
 
-![Slack comparison](docs/slack_comparison.png)
+![Slack comparison](docs/slackcomparison.png)
 
 - Initial convergence: both settings bring the laser spot close to the center in a few seconds.
-- Slack 0°: the X error keeps jumping up and down and never really settles
-- Slack 3°: the X error settles quickly and stays almost constant, with only a small offset left.
+- Slack 0°: there is no backlash compensation, so the gear play is not taken up. The X error keeps jumping up and down before settling, and the settling time varies a lot between runs due to the backlash in the servo gears.
+- Slack 3°: the X error settles quickly and consistently, with only a small offset left.
 - Y axis: almost the same for both settings.
 
 Overall, slack 3° gives a more stable alignment on the pan axis than 0°.
-Slack 0° has no backlash compensation, so the gear play is not taken up and the X error keeps drifting.
 
 ## How to run
 
