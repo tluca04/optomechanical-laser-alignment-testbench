@@ -59,7 +59,7 @@ Flash the ESP32 (ESP-IDF):
 ```bash
 cd firmware
 idf.py build
-idf.py -p COM3 flash monitor
+idf.py -p COM4 flash monitor # (edit COM port)
 ```
 
 ```bash
@@ -67,7 +67,7 @@ cd host
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
-python reader.py      # logs to data.csv (edit COM port inside)
+python tracker.py      # logs to data.csv (edit COM port inside)
 python imuplot.py     # plots data.csv
 ```
 
