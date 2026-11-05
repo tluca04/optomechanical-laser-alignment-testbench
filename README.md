@@ -1,8 +1,8 @@
 # Optomechanical Laser Alignment Testbench
 
-Testbench built to see how well sensor feedback and mechanical spring preloading can fix the backlash and vibration issues of cheap SG90 micro-servos when steering a laser beam.
+Testbench built to evaluate how well camera feedback and mechanical spring preloading can compensate for backlash and vibration in cheap SG90 micro-servos when steering a laser beam.
 
-An ESP32 controls a 2-axis pan-tilt mount carrying a 650 nm laser diode (KY-008), while reading angle encoders, an IMU. A webcam on the PC tracks the laser spot on a target to close the control loop.
+An ESP32 controls a 2-axis pan-tilt mount carrying a 650 nm laser diode (KY-008), while reading an MPU-6050 IMU. A webcam connected to the PC tracks the laser spot and measures its offset from the center of the camera image. The PC sends pan/tilt corrections to the ESP32 over UART to bring the laser spot back to the center
 
 ## Hardware notes
 
@@ -19,19 +19,6 @@ Sensors on the rig:
 
 Current bench setup with the 3D-printed pan-tilt mount, SG90 servos, KY-008 laser diode, and the MPU-6050 mounted directly on the top tilt bracket. The ESP32 sits on the breadboard with the 100 nF decoupling capacitor on the 5V rail and the NPN transistor switch (1k base resistor, 10k pull-down) driving the laser on GPIO 27.
 
-## Todo / Progress
-
-- [x] ESP-IDF I2C master driver (GPIO 21/22)
-- [x] MPU-6050 communication check (WHO_AM_I returns 0x72 instead of 0x68, since the GY-521 board has a clone chip)
-- [x] Python serial reader and CSV logger (host/reader.py)
-- [x] 14-byte burst read for accel, temp and gyro
-- [x] 100 Hz sampling loop + 44 Hz hardware low-pass filter (DLPF = 0x03)
-- [x] Python script to plot accel and gyro data (host/plot.py)
-- [x] PWM control for the SG90 servos (LEDC driver)
-- [x] Staggered servo movement, so the USB port doesn't brown out
-- [x] Two-way UART: the ESP32 reads commands (CMD,pan,tilt) without blocking the main loop
-- [ ] OpenCV script to find the laser spot (X, Y) coordinates
-- [ ] Closed-loop serial tracking
 
 ## I2C Address
 
@@ -43,22 +30,25 @@ Current bench setup with the 3D-printed pan-tilt mount, SG90 servos, KY-008 lase
 
 Other pins (servo PWM, laser transistor, SPI) are listed in docs/wiring.md.
 
-## IMU Data & UART Control Test
+## Camera-Centering & IMU Validation Test
 
-MPU-6050 at 100 Hz (sample rate divider 9, DLPF 44 Hz), +-2 g and +-250 deg/s. The IMU is mounted directly on the moving tilt bracket next to the laser, while sequential servo commands are sent from the PC over UART every 0.8 s.
+MPU-6050 at 100 Hz (sample rate divider 9, DLPF 44 Hz), ±2 g and ±250 deg/s. The IMU is mounted directly on the moving tilt bracket next to the laser. The test starts with the laser spot away from the center of the camera image. The PC detects the spot, calculates the horizontal and vertical error in pixels, and continuously sends servo corrections over UART.
 
 ![IMU and servo test](docs/imu_100hz_validation.png)
 
-- 0 - 1.0 s: mount at rest (pan 90, tilt 90), gravity on Z (~1 g), gyro flat at 0 deg/s
-- 1.02 s: pan 90 -> 70 (sharp negative spike on Gz down to -250 deg/s, followed by mechanical ringing as the bracket settles)
-- 1.82 s: tilt 90 -> 105 (positive spike on Gy up to +250 deg/s; Ax baseline shifts to ~ -0.28 g because the sensor is now tilted relative to gravity)
-- 2.62 s: pan 70 -> 110 (positive Gz spike saturating at +250 deg/s with small cross-axis coupling on Gx)
-- 3.42 s: tilt 105 -> 85 (negative Gy spike down to -250 deg/s; Ax baseline shifts slightly above 0 g for the 85 deg tilt angle)
-- 4.22 s: pan 110 -> 90 (negative Gz spike down to -250 deg/s as pan returns to center)
-- 5.02 s: tilt 85 -> 90 (positive Gy spike up to ~190 deg/s; Ax returns to 0 g)
-- 5.3 - 6.0 s: back at rest at (90, 90), vibrations damp out completely
+![Laser spot centered in camera image](docs/laser_centered.jpeg)
 
-Servos are moved one axis at a time with a 0.8 s delay between steps to avoid overlapping stall currents on the 5V USB rail and to isolate pan (Gz) and tilt (Gy) dynamics on the IMU plots.
+Final alignment result, with the laser spot positioned close to the center of the camera image after the pan-tilt correction loop converges.
+
+ - 0.0 - 0.2 s: Initial position, with the laser spot offset from the camera center (approximately +52 px on X and -165 px on Y). The servos start at around pan 105° and tilt 95°.
+ - 0.2 - 1.0 s: The first corrections begin. Both servo angles decrease in steps, moving the laser closer to the center. The Y error starts dropping significantly, while the IMU records the initial movement and mechanical vibrations.
+ - 1.0 - 1.8 s: The controller makes further corrections. Pan briefly moves back up to around 104° before returning toward 100°, while tilt continues moving down. This produces another change in the X error, while the Y error keeps getting closer to zero. The IMU records the largest angular velocity spikes during these movements.
+ - 1.8 - 2.6 s: The servo positions settle around pan 100° and tilt 85.5°. Both X and Y errors converge toward zero as the laser spot reaches the center of the camera image. The vibrations measured by the IMU gradually die out.
+ - 2.6 - 10.1 s: The system remains stable, with no significant servo movement. Both errors stay close to zero, acceleration remains nearly constant, and gyroscope readings stay around 0 deg/s. The laser spot is maintained near the center of the camera image.
+ - 10.1 s: A short disturbance appears in the accelerometer and gyroscope readings. The servo positions remain unchanged, and the camera error shows only a small variation.
+ - 10.1 - 12.3 s: The system remains stable after the disturbance, with the laser spot still close to the camera center and the IMU readings returning to their previous levels.
+
+The servo angle plots show commanded positions rather than measured shaft angles. The camera provides the feedback used for positioning, while the IMU measures the movement and vibrations of the laser bracket during the alignment process.
 
 ## How to run
 
