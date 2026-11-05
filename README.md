@@ -2,7 +2,7 @@
 
 Testbench built to evaluate how well camera feedback and mechanical spring preloading can compensate for backlash and vibration in cheap SG90 micro-servos when steering a laser beam.
 
-An ESP32 controls a 2-axis pan-tilt mount carrying a 650 nm laser diode (KY-008), while reading an MPU-6050 IMU. A webcam connected to the PC tracks the laser spot and measures its offset from the center of the camera image. The PC sends pan/tilt corrections to the ESP32 over UART to bring the laser spot back to the center
+An ESP32 controls a 2-axis pan-tilt mount carrying a 650 nm laser diode (KY-008), while reading an MPU-6050 IMU. A webcam connected to the PC tracks the laser spot and measures its offset from the center of the camera image. The PC sends pan/tilt corrections to the ESP32 over UART to bring the laser spot back to the center. The OpenCV tracker also supports manual target selection and color-based tracking.
 
 ## Hardware notes
 
