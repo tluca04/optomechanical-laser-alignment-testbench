@@ -37,7 +37,7 @@ MPU-6050 at 100 Hz (sample rate divider 9, DLPF 44 Hz), ±2 g and ±250 deg/s. T
 ![IMU and servo test](docs/imu_100hz_validation.png)
 
 <p align="center">
-  <img src="docs/setup.jpeg" alt="Testbench physical setup" width="400">
+  <img src="docs/setup.jpeg" alt="Testbench physical setup" height="513">
   <img src="docs/laser_centered.jpeg" alt="Laser spot centered in camera image" width="400">
 </p>
 
