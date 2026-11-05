@@ -97,6 +97,27 @@ tilt_pending_target = None
 def clamp(value, minimum, maximum):
     return max(minimum, min(maximum, value))
 
+manual_target = None
+track_color_object = False
+HSV_LOWER_1 = (0, 120, 70)      
+HSV_UPPER_1 = (10, 255, 255)
+HSV_LOWER_2 = (170, 120, 70)
+HSV_UPPER_2 = (180, 255, 255)
+COLOR_OBJECT_MIN_AREA = 150
+OBJECT_KERNEL = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (25, 25))
+
+TARGET_MARGIN = 40
+
+def on_mouse(event, x, y, flags, param):
+    global manual_target, track_color_object
+    if event == cv2.EVENT_LBUTTONDOWN or (event == cv2.EVENT_MOUSEMOVE and (flags & cv2.EVENT_FLAG_LBUTTON)):
+        manual_target = (float(clamp(x, TARGET_MARGIN, FRAME_W - 1 - TARGET_MARGIN)), float(clamp(y, TARGET_MARGIN, FRAME_H - 1 - TARGET_MARGIN)))
+    elif event == cv2.EVENT_RBUTTONDOWN:
+        manual_target = None
+    elif event == cv2.EVENT_MBUTTONDOWN:
+        track_color_object = not track_color_object
+        print(f"Color object tracking: {'ON' if track_color_object else 'OFF'}")
+
 
 def read_serial_lines():
     global serial_buffer
@@ -331,6 +352,9 @@ try:
     mode = "TRACK"
     lost_since = None
     print("Started. Press 'q' to stop.")
+    cv2.namedWindow("Camera")
+    cv2.setMouseCallback("Camera", on_mouse)
+    print("Left click = move target | Right click = back to center | 't' or middle click = track red object | 'q' = quit")
 
     while True:
         update_servos()
@@ -354,6 +378,31 @@ try:
         image_height, image_width, _ = frame.shape
         center_x = image_width / 2.0
         center_y = image_height / 2.0
+
+        if track_color_object:
+            hsv_image = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+            object_mask = cv2.bitwise_or(cv2.inRange(hsv_image, HSV_LOWER_1, HSV_UPPER_1),
+                                         cv2.inRange(hsv_image, HSV_LOWER_2, HSV_UPPER_2))
+            near_object = cv2.dilate(object_mask, OBJECT_KERNEL)
+
+            bright = cv2.inRange(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY), BRIGHTNESS_THRESHOLD_MIN, 255)
+            color_mask = cv2.bitwise_or(object_mask, cv2.bitwise_and(bright, near_object))
+            color_mask = cv2.morphologyEx(color_mask, cv2.MORPH_CLOSE, OBJECT_KERNEL)
+            color_contours, _ = cv2.findContours(color_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            if color_contours:
+                largest_object = max(color_contours, key=cv2.contourArea)
+                if cv2.contourArea(largest_object) > COLOR_OBJECT_MIN_AREA:
+                    object_hull = cv2.convexHull(largest_object)
+                    object_moments = cv2.moments(object_hull)
+                    if object_moments["m00"] > 0:
+                        center_x = object_moments["m10"] / object_moments["m00"]
+                        center_y = object_moments["m01"] / object_moments["m00"]
+                        center_x = clamp(center_x, TARGET_MARGIN, image_width - 1 - TARGET_MARGIN)
+                        center_y = clamp(center_y, TARGET_MARGIN, image_height - 1 - TARGET_MARGIN)
+                        obj_x, obj_y, obj_w, obj_h = cv2.boundingRect(object_hull)
+                        cv2.rectangle(frame, (obj_x, obj_y), (obj_x + obj_w, obj_y + obj_h), (255, 150, 0), 2)
+        elif manual_target is not None:
+            center_x, center_y = manual_target
 
         gray_image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         threshold = max(BRIGHTNESS_THRESHOLD_MIN, int(gray_image.max()) - 15)
@@ -448,11 +497,9 @@ try:
                         break
 
         if mode == "TRACK":
-            a_servo_is_moving = (pan_current_angle != pan_target_angle) or (tilt_current_angle != tilt_target_angle)
-
             if not (pan_current_angle == pan_target_angle and pan_pending_target is None):
                 pan_error_samples.clear()
-            elif spot is not None and not a_servo_is_moving \
+            elif spot is not None and not servos_are_busy \
                     and frame_time > pan_last_move_time + SETTLE_BASE + SETTLE_PER_DEGREE * pan_last_step_size:
                 pan_error_samples.append(error_x)
                 if len(pan_error_samples) >= NUMBER_OF_SAMPLES:
@@ -468,10 +515,11 @@ try:
                             plan_move("pan", -step)
                         else:
                             plan_move("pan", step)
+                        servos_are_busy = True
 
             if not (tilt_current_angle == tilt_target_angle and tilt_pending_target is None):
                 tilt_error_samples.clear()
-            elif spot is not None and not a_servo_is_moving \
+            elif spot is not None and not servos_are_busy \
                     and frame_time > tilt_last_move_time + SETTLE_BASE + SETTLE_PER_DEGREE * tilt_last_step_size:
                 tilt_error_samples.append(error_y)
                 if len(tilt_error_samples) >= NUMBER_OF_SAMPLES:
@@ -487,6 +535,14 @@ try:
                             plan_move("tilt", step)
                         else:
                             plan_move("tilt", -step)
+                        servos_are_busy = True
+
+        extra_key = cv2.pollKey() & 0xFF
+        if extra_key == ord('t'):
+            track_color_object = not track_color_object
+            print(f"Color object tracking: {'ON' if track_color_object else 'OFF'}")
+        elif extra_key == ord('q'):
+            break
 
         cv2.circle(frame, (int(center_x), int(center_y)), DEADZONE_STOP, (0, 0, 255), 2)
         cv2.putText(frame, mode, (10, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
