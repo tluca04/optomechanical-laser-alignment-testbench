@@ -38,7 +38,7 @@ MPU-6050 at 100 Hz (sample rate divider 9, DLPF 44 Hz), ±2 g and ±250 deg/s. T
 
 <p align="center">
   <img src="docs/setup.jpeg" alt="Testbench physical setup" height="513">
-  <img src="docs/laser_centered.jpeg" alt="Laser spot centered in camera image" width="400">
+  <img src="docs/laser_centered.jpeg" alt="Laser spot centered in camera image" width="400" height="513">
 </p>
 
 Final alignment result, with the laser spot positioned close to the center of the camera image after the pan-tilt correction loop converges.
