@@ -8,7 +8,7 @@ An ESP32 controls a 2-axis pan-tilt mount carrying a 650 nm laser diode (KY-008)
 
 The pan-tilt bracket is 3D-printed and uses springs to preload the servo gears. Since SG90 servos draw current spikes that can reset or add noise to the ESP32, the servos and laser run on a separate 5V rail from an LM2596 buck converter. The laser is switched through an NPN transistor.
 
-Sensors on the rig:
+Sensor on the rig:
 - MPU-6050 IMU on the laser bracket to measure vibrations and impacts.
 
 ## Physical Setup
